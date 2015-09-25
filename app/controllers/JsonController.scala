@@ -28,10 +28,7 @@ object JsonController {
 
   // JsonをUserFormに変換するためのReadsを定義
   // implicit val userFormFormat = (
-  implicit val userFormReads = (
-    (__ \ "id").readNullable[Long] and
-    (__ \ "name").read[String] and
-    (__ \ "companyId").readNullable[Int])(UserForm)
+  implicit val userFormReads = Json.reads[UserForm]
 }
 
 // テンプレートを使用していないので国際化機能のために必要だったMessagesApiのDIやI18nSupportトレイトのミックスインは行っていません。
