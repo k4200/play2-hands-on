@@ -19,12 +19,16 @@ object JsonController {
 
   // ユーザー情報を受け取るためのケースクラス
   case class UserForm(id: Option[Long], name: String, companyId: Option[Int])
+  // companion object で apply が定義されていると、Json.writes/reads が上手くいかない
+  // https://github.com/playframework/playframework/pull/5118
+//  object UserForm {
+//    def apply(usersRow: UsersRow): UserForm = {
+//      UserForm(Option(usersRow.id), usersRow.name, usersRow.companyId)
+//    }
+//  }
 
-  // UsersRowをJSONに変換するためのWritesを定義
-  implicit val usersRowWritesWrites = (
-    (__ \ "id").write[Long] and
-    (__ \ "name").write[String] and
-    (__ \ "companyId").writeNullable[Int])(unlift(UsersRow.unapply))
+  // UserFormをJSONに変換するためのWritesを定義
+  implicit val userFormWrites = Json.writes[UserForm]
 
   // JsonをUserFormに変換するためのReadsを定義
   // implicit val userFormFormat = (
@@ -43,7 +47,8 @@ class JsonController @Inject() (val dbConfigProvider: DatabaseConfigProvider) ex
    */
   def list = Action.async { implicit rs =>
     // IDの昇順に全てのユーザー情報を取得
-    db.run(Users.sortBy(t => t.id).result).map { users =>
+    db.run(Users.sortBy(t => t.id).result).map { rows =>
+      val users = rows.map(row => UserForm(Option(row.id), row.name, row.companyId))
       // ユーザーの一覧をJSONで返す
       Ok(Json.obj("users" -> users))
     }
